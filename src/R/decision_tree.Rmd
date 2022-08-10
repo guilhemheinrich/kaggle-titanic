@@ -1,16 +1,19 @@
+```{r include = FALSE}
 source("./data_load.R")
 source("./sampler.R")
 source("./formula_builder.R")
 library(dplyr)
+```
+# Procedure
 
-
+Test all formulas (no Character type included) by learning from half the learning sample to predict the other half. As the sampling process is random, iterate 100 times each. 
+```{r}
 LOOP_NUMBER <- 100
 FACTORS <- c("Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked")
 RESPONSE_VARIABLE <- "Survived"
-# Learn from half the data
-batch_predict_ratio <- 2
-
+```
 # Build all formulas
+```{r}
 all_formulas <- build_formulas(
     response_variable = RESPONSE_VARIABLE,
     factors = FACTORS
@@ -23,7 +26,7 @@ for (formula in all_formulas) {
     for (loop_index in (1:LOOP_NUMBER)) {
         sample <- random_sampler(
             data = training,
-            batch_predict_ratio = batch_predict_ratio)
+            batch_predict_ratio = 2)
 
         decision_tree <- party::ctree(
             formula,
@@ -34,26 +37,13 @@ for (formula in all_formulas) {
     }
     all_result[[as.character(formula)[3]]] <- result
 }
+```
 
-# Save the calculation
+```{r}
 all_result_matrix <- sapply(all_result, function(vec) {
   return(vec)
 })
 all_result_mean <- colMeans(all_result_matrix)
 ordering <- sort(all_result_mean, index.return = TRUE, decreasing = TRUE)
-ordering$x
-
-# # Plotting
-# all_result_matrix[,ordering$ix][,(1:10)]
-# heatmap(t(all_result_matrix[,ordering$ix][,(1:10)]))
-# 
-# # Using ggplot
-# data <- data.frame(t(all_result_matrix[,ordering$ix]))
-# 
-# t(all_result_matrix[,ordering$ix]) %>% 
-#   as.data.frame() %>%
-#   rownames_to_column("f_id") %>%
-#   pivot_longer(-c(f_id), names_to = "samples", values_to = "counts") %>%
-#   ggplot(aes(x=samples, y=f_id, fill=counts)) + 
-#   geom_raster() +
-#   scale_fill_viridis_c()
+ordering$x[(1:10)]
+```
